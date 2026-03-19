@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.37"
+      version = "~> 5.0"
     }
   }
 
@@ -16,12 +16,12 @@ terraform {
   # Uncomment after creating the S3 bucket.
   # Replace YOUR_ACCOUNT_ID with your actual AWS account ID.
 
-  # backend "s3" {
-  #   bucket  = "cloudpulse-tfstate-YOUR_ACCOUNT_ID"
-  #   key     = "cloudpulse/terraform.tfstate"
-  #   region  = "eu-west-1"
-  #   encrypt = true
-  # }
+   backend "s3" {
+     bucket  = "cloudpulse-tfstate-YOUR_ACCOUNT_ID"
+     key     = "cloudpulse/terraform.tfstate"
+     region  = "eu-west-1"
+     encrypt = true
+   }
 }
 
 provider "aws" {
