@@ -107,14 +107,14 @@ module "cloudpulse_sg" {
   tags = { Project = var.project_name }
 }
 
-locals {
-  s3_bucket_name = "${var.s3_bucket_prefix}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}-an"
-}
-
-resource "aws_s3_bucket" "cloudpulse" {
-  bucket = local.s3_bucket_name
-  tags   = { Name = "${var.project_name}-assets" }
-}
+# locals {
+#   s3_bucket_name = "${var.s3_bucket_prefix}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+# }
+#
+# resource "aws_s3_bucket" "cloudpulse" {
+#   bucket = local.s3_bucket_name
+#   tags   = { Name = "${var.project_name}-assets" }
+# }
 
 resource "aws_s3_object" "background" {
   bucket       = aws_s3_bucket.cloudpulse.id
