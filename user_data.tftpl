@@ -1,0 +1,68 @@
+#!/bin/bash
+yum update -y
+yum install -y python3-pip
+pip3 install flask boto3 requests pytz
+
+cat > /home/ec2-user/app.py << 'APPEOF'
+from flask import Flask, render_template_string, Response
+import requests, datetime, boto3, io
+from pytz import timezone
+
+app = Flask(__name__)
+
+BUCKET_NAME = "${bucket_name}"
+TABLE_NAME  = "${table_name}"
+REGION      = "${region}"
+IMAGE_KEY   = "${image_key}"
+
+s3_client = boto3.client('s3', region_name=REGION)
+dynamodb  = boto3.resource('dynamodb', region_name=REGION)
+table     = dynamodb.Table(TABLE_NAME)
+
+def get_metadata(path):
+    try:
+        token = requests.put("http://169.254.169.254/latest/api/token",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}, timeout=1).text
+        return requests.get(f"http://169.254.169.254/latest/meta-data/{path}",
+            headers={"X-aws-ec2-metadata-token": token}, timeout=1).text
+    except: return "Unknown"
+
+@app.route('/background-image')
+def bg():
+    try:
+        r = s3_client.get_object(Bucket=BUCKET_NAME, Key=IMAGE_KEY)
+        return Response(r['Body'].read(), mimetype='image/jpeg')
+    except Exception as e: return f"Error: {e}", 404
+
+@app.route('/')
+def index():
+    iid = get_metadata('instance-id')
+    az = get_metadata('placement/availability-zone')
+    try:
+        resp = table.update_item(Key={'id':'visits'},
+            UpdateExpression="set #c = #c + :v",
+            ExpressionAttributeNames={'#c':'count'},
+            ExpressionAttributeValues={':v':1},
+            ReturnValues="UPDATED_NEW")
+        count = resp['Attributes']['count']
+    except: count = "Error"
+    fmt = "%H:%M:%S"
+    ny = datetime.datetime.now(timezone('America/New_York')).strftime(fmt)
+    ldn = datetime.datetime.now(timezone('Europe/London')).strftime(fmt)
+    tky = datetime.datetime.now(timezone('Asia/Tokyo')).strftime(fmt)
+    return f"""<html><head><title>Cloud Pulse</title>
+    <style>body{{font-family:sans-serif;background:url('/background-image') no-repeat center/cover fixed;color:#fff;text-align:center;margin:0}}
+    .box{{background:rgba(0,0,0,.85);display:inline-block;padding:40px;margin-top:100px;border-radius:20px;border:2px solid #ffa500}}
+    .clocks{{display:flex;gap:40px;margin:30px 0;justify-content:center}}.clock-item b{{color:#ffa500}}
+    .count{{font-size:28px;color:#ffa500;font-weight:bold;margin-top:20px}}</style></head>
+    <body><div class="box"><h1>Cloud Pulse</h1>
+    <p><b>Instance:</b> {iid} | <b>Zone:</b> {az}</p><hr>
+    <div class="clocks"><div class="clock-item"><b>New York</b><br>{ny}</div>
+    <div class="clock-item"><b>London</b><br>{ldn}</div>
+    <div class="clock-item"><b>Tokyo</b><br>{tky}</div></div>
+    <div class="count">Visitors: {count}</div></div></body></html>"""
+
+if __name__ == "__main__": app.run(host='0.0.0.0', port=80)
+APPEOF
+
+cd /home/ec2-user && sudo python3 app.py &
