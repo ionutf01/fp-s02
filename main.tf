@@ -50,6 +50,7 @@ data "aws_ami" "amazon_linux" {
 # ============================================================
 # PHASE 1: Network — VPC + Subnet + Routes
 # ============================================================
+
 /*
 resource "aws_vpc" "cloudpulse" {
   cidr_block           = var.vpc_cidr
@@ -87,11 +88,12 @@ resource "aws_route_table_association" "public" {
 */
 
 # ============================================================
-# PHASE 2: Security Group (module) + S3 (account-regional)
+# PHASE 2: Security Group (module) + S3
 # ============================================================
 # NOTE: After uncommenting, run "terraform init" before apply
 #       (required because the module is new)
 # ============================================================
+
 /*
 module "cloudpulse_sg" {
   source      = "./modules/security-group"
@@ -107,14 +109,14 @@ module "cloudpulse_sg" {
   tags = { Project = var.project_name }
 }
 
-# locals {
-#   s3_bucket_name = "${var.s3_bucket_prefix}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
-# }
-#
-# resource "aws_s3_bucket" "cloudpulse" {
-#   bucket = local.s3_bucket_name
-#   tags   = { Name = "${var.project_name}-assets" }
-# }
+locals {
+   s3_bucket_name = "${var.s3_bucket_prefix}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+}
+
+resource "aws_s3_bucket" "cloudpulse" {
+   bucket = local.s3_bucket_name
+   tags   = { Name = "${var.project_name}-assets" }
+}
 
 resource "aws_s3_object" "background" {
   bucket       = aws_s3_bucket.cloudpulse.id
@@ -125,8 +127,9 @@ resource "aws_s3_object" "background" {
 */
 
 # ============================================================
-# PHASE 3: DynamoDB + Lifecycle
+# PHASE 3: DynamoDB
 # ============================================================
+
 /*
 resource "aws_dynamodb_table" "cloudpulse" {
   name         = var.dynamodb_table_name
@@ -152,15 +155,16 @@ resource "aws_dynamodb_table_item" "visits" {
 }
 ITEM
 
-  lifecycle {
-    ignore_changes = [item]
-  }
+#  lifecycle {
+#    ignore_changes = [item]
+#  }
 }
 */
 
 # ============================================================
 # PHASE 4: IAM + EC2
 # ============================================================
+
 /*
 resource "aws_iam_role" "cloudpulse_ec2" {
   name = "${var.project_name}-ec2-role"
