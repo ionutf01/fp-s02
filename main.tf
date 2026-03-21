@@ -48,7 +48,7 @@ data "aws_ami" "amazon_linux" {
 
 
 # ============================================================
-# PHASE 1: Network — VPC + Subnet + Routes
+# PHASE 1: Network — VPC + Subnet + Route table
 # ============================================================
 
 /*
@@ -85,6 +85,9 @@ resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
 }
+
+# ✅ APPLY, then check the AWS Console to verify your resources appeared!
+
 */
 
 # ============================================================
@@ -124,6 +127,9 @@ resource "aws_s3_object" "background" {
   source       = var.background_image_path
   content_type = "image/jpeg"
 }
+
+# ✅ APPLY, then check the AWS Console to verify your resources appeared!
+
 */
 
 # ============================================================
@@ -133,7 +139,7 @@ resource "aws_s3_object" "background" {
 /*
 resource "aws_dynamodb_table" "cloudpulse" {
   name         = var.dynamodb_table_name
-  billing_mode = "PAY_PER_REQUEST"
+  billing_mode = "PAY_PER_REQUEST" # No capacity planning — you pay only for actual reads/writes
   hash_key     = "id"
 
   attribute {
@@ -159,6 +165,9 @@ ITEM
 #    ignore_changes = [item]
 #  }
 }
+
+# ✅ APPLY, then check the AWS Console to verify your resources appeared!
+
 */
 
 # ============================================================
@@ -220,4 +229,7 @@ resource "aws_instance" "cloudpulse" {
 
   tags = { Name = "${var.project_name}-server" }
 }
+
+# ✅ APPLY, then check the AWS Console to verify your resources appeared!
+
 */

@@ -57,3 +57,12 @@ variable "instance_type" {
   type        = string
   default     = "t3.micro"
 }
+
+variable "common_tags" {
+  description = "Tags applied to all resources"
+  type        = map(string)
+  default = {
+    ManagedBy = "terraform"
+    Project   = "cloudpulse"
+  }
+}
